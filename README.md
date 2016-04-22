@@ -3,7 +3,7 @@
 [Teaser picture + MATLAB code to extract feature]
 
 ### Introduction
-Most up-to-date results are described in our [arXiv tech report](https://arxiv.org/abs/1604.03265). Our paper will also appear as a CVPR 2016 spotlight. In this repository, we release code, data for training Volumetric CNNs for object classification on 3D data. We also provide trained models and a MATLAB interface to extract 3D features from a binary volume.
+This work is based on our [arXiv tech report](https://arxiv.org/abs/1604.03265). Our paper will also appear as a CVPR 2016 spotlight (please refer to the arXiv one for most up-to-date results). In this repository, we release code, data for training Volumetric CNNs for object classification on 3D data. We also provide trained models and a MATLAB interface to extract 3D features from a binary volume.
 
 ### License
 Our code and models are released under MIT License (see LICENSE file for details).
