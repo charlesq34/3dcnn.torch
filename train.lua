@@ -5,7 +5,8 @@ require 'xlua'
 require 'nn'
 dofile './provider.lua'
 
-opt = lapp[[
+opt_string = [[
+    -h,--help                                       print help
     -s,--save               (default "logs")        subdirectory to save logs
     -b,--batchSize          (default 64)            batch size
     -r,--learningRate       (default 0.01)          learning rate
@@ -16,12 +17,22 @@ opt = lapp[[
     -g,--gpu_index          (default 1)             GPU index
     --max_epoch             (default 200)           maximum number of epochs
     --jitter_step           (default 2)             jitter augmentation step size
-    --model                 (default 3dnin_fc)      model name
+    --model                 (default 3dnin_fc)      model name (voxnet, 3dnin, 3dnin_fc, subvolume_sup, aniprobing)
     --train_data            (default "data/modelnet40_60x/train_data.txt")     txt file containing train h5 filenames
     --test_data             (default "data/modelnet40_60x/test_data.txt")      txt file containing test h5 filenames
 ]]
 
-print(opt)
+opt = lapp(opt_string)
+
+-- print help or chosen options
+if opt.help == true then
+    print('Usage: th train.lua')
+    print('Options:')
+    print(opt_string)
+    os.exit()
+else
+    print(opt)
+end
 
 -- set gpu
 cutorch.setDevice(opt.gpu_index)
@@ -59,6 +70,11 @@ testLogger.showPlot = 'false'
 
 -- confusion matrix
 confusion = optim.ConfusionMatrix(40)
+
+
+------------------------------------
+-- Training routine
+--
 
 function train()
     model:training()
@@ -121,17 +137,18 @@ function train()
 end     
 
 
+-------------------------------------
+-- Test routine
+--
 
 function test()
-    -- disable flips, dropouts and batch normalization
     model:evaluate()
     
     for fn = 1, #test_files do
         current_data, current_label = loadDataFile(test_files[fn])
         
         -- notice: volumetric batchnorm requires that both 
-        -- train and test are of the same ndim. thus we need to
-        -- use batch mode here for test
+        -- train and test are of the same ndim.        
         local filesize = (#current_data)[1]
         local indices = torch.randperm(filesize):long():split(opt.batchSize)
         for t, v in ipairs(indices) do
@@ -190,13 +207,15 @@ function test()
     if epoch % 10 == 0 then
       local filename = paths.concat(opt.save, 'model.net')
       print('==> saving model to '..filename)
-      -- torch.save(filename, model:get(3):clearState())
-      torch.save(filename, model)
+      torch.save(filename, model:clearState())
     end 
     
     confusion:zero()
 end
 
+-----------------------------------------
+-- Start training
+--
 for i = 1,opt.max_epoch do
     train()
     test()

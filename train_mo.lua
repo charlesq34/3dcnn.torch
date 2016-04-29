@@ -1,5 +1,4 @@
 require 'nn'
-require 'stn3d'
 require 'cunn'
 require 'cudnn'
 require 'optim'
@@ -7,7 +6,8 @@ require 'xlua'
 dofile './provider.lua'
 
 
-opt = lapp[[
+opt_string = [[
+    -h,--help                                                       print help
     -s,--save               (default "mo_logs")                     subdirectory to save logs
     -b,--batchSize          (default 64)                            batch size
     -r,--learningRate       (default 0.001)                         learning rate
@@ -17,14 +17,24 @@ opt = lapp[[
     --epoch_step            (default 20)                            epoch step
     -g,--gpu_index          (default 1)                             GPU index
     --max_epoch             (default 50)                            maximum number of epochs
-    --model                 (default 3dnin_fc)                      model name
-    --model_param_file      (default "torch_models/3dnin_fc.net)    model parameter filename
+    --model                 (default 3dnin_fc)      model name (voxnet, 3dnin, 3dnin_fc, subvolume_sup, aniprobing)
+    --model_param_file      (default "logs/model.net)               model parameter filename
     --pool_layer_idx        (default -1)                            pool output of the idx-th layer
     --train_data            (default "data/modelnet40_20x_stack/train_data.txt")   txt file containing train h5 filenames
     --test_data             (default "data/modelnet40_20x_stack/test_data.txt")    txt file containing test h5 filenames
 ]]
 
-print(opt)
+opt = lapp(opt_string)
+
+-- print help or chosen options
+if opt.help == true then
+    print('Usage: th train_mo.lua --model <modelname> --model_param_file <paramfile>')
+    print('Options:')
+    print(opt_string)
+    os.exit()
+else
+    print(opt)
+end
 
 -- set gpu
 cutorch.setDevice(opt.gpu_index)
@@ -41,6 +51,23 @@ if opt.pool_layer_idx < 1 then
 else
     layer_idx = opt.pool_layer_idx
 end
+
+-- construct pooling model from original one
+model_new = model:clone()
+for i = 1,layer_idx do
+    model_new:remove(1)
+end
+model = model_new:cuda()
+model:zeroGradParameters()
+parameters, gradParameters = model:getParameters()
+print(model)
+
+unused, criterion = dofile('torch_models/'..opt.model..'.lua')
+assert(#model == #unused) -- check for consistency
+if not criterion then
+    criterion = nn.CrossEntropyCriterion():cuda()
+end
+
 
 print('Loading data...')
 train_files = getDataFiles(opt.train_data)
@@ -92,21 +119,6 @@ print(#test_data)
 
 print('Starting to train multi-orientation pooling ...')
 
--- pooling model
-model_new = model:clone()
-for i = 1,layer_idx do
-    model_new:remove(1)
-end
-model = model_new:cuda()
-model:zeroGradParameters()
-parameters, gradParameters = model:getParameters()
-print(model)
-
-unused, criterion = dofile('torch_models/'..opt.model..'.lua')
-if not criterion then
-    criterion = nn.CrossEntropyCriterion():cuda()
-end
-
 -- config for SGD solver
 optimState = {
     learningRate = opt.learningRate,
@@ -122,6 +134,10 @@ testLogger.showPlot = 'false'
 -- confusion matrix
 confusion = optim.ConfusionMatrix(40)
 confusion:zero()
+
+----------------------------------------
+-- Training routine
+--
 
 epoch_step = opt.epoch_step
 batchSize = opt.batchSize
@@ -180,6 +196,10 @@ function train()
     confusion:zero()
     epoch = epoch + 1
 end
+
+----------------------------------------
+-- Test routine
+--
 
 function test()
     -- disable flips, dropouts and batch normalization
@@ -264,6 +284,9 @@ function test()
     confusion:zero()
 end
 
+----------------------------------------
+-- Start training
+--
 for e = 1,opt.max_epoch do
     train()
     test()

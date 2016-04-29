@@ -5,9 +5,9 @@ require 'hdf5'
 if not paths.dirp('data/modelnet40_60x') then
     local www = 'https://shapenet.cs.stanford.edu/media/modelnet40_h5.tar'
     local tar = paths.basename(www)
-    os.execute('cd data')
+    os.execute('mkdir data')
     os.execute('wget ' .. www .. '; ' .. 'tar xvf ' .. tar)
-    os.execute('cd ..')
+    os.execute('mv modelnet40_* data')
 end
 
 -- small jitter data augmentation
