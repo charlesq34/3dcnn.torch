@@ -21,15 +21,15 @@ To train a model to classify 3D object:
 
 Voxelizations of <a href="http://modelnet.cs.princeton.edu/" target="_blank">ModelNet40</a> models in HDF5 files will be automatically downloaded (633MB). `modelnet40_60x` include azimuth and elevation rotation augmented occupancy grids. `modelnet40_12x` is of azimuth rotation augmentation only. `modelnet40_20x_stack` is used for multi-orientation training. There are also text files in each folder specifying the sequence of CAD models in h5 files.
 
-To see options for training just type:
+To see HELP for training script:
 
     th train.lua -h
 
-After the above training, which trains a 3D CNN classifying object based on single input, you can then train a multi-orientation 3D CNN by initializing it with the pretrained network that takes single orientation input:
+After the above training, which trains a 3D CNN classifying object based on single input, we can then train a multi-orientation 3D CNN by initializing it with the pretrained network with single orientation input:
 
     th train_mo.lua --model <network_name> --model_param_file <model_param_filepath>
 
-You need to specify at which layer to max-pool the feature in the network, it can be either set in command line by `--pool_layer_idx <layer_idx>` or set it interactively when after the program starts and prints the network layers and indices. For `3dnin_fc`, `--pool_layer_idx 27` which will max pool the outputs of the last convolutional layer from multiple orientations of a volume.
+You need to specify at which layer to max-pool the feature in the network, it can be either set in command line by `--pool_layer_idx <layer_idx>` or set interactively after the script starts - the network layers and indices will be printed. For `3dnin_fc`, one option is to set `--pool_layer_idx 27` which will max pool the outputs of the last convolutional layer from multiple orientations pooling.
 
 Below are the classification accuracis we got on ModelNet40 test data.
 
