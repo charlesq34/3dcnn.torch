@@ -1,18 +1,18 @@
 # Volumetric CNN (Convolutional Neural Networks) for Object Classification on 3D Data
 
 ### Introduction
-This work is based on our [arXiv tech report](https://arxiv.org/abs/1604.03265). Our paper will also appear as a CVPR 2016 spotlight (please refer to the arXiv one for most up-to-date results). In this repository, we release code, data for training Volumetric CNNs for object classification on 3D data. We also provide trained models and a MATLAB interface to extract 3D features from a binary volume.
+This work is based on our [arXiv tech report](https://arxiv.org/abs/1604.03265). Our paper will also appear as a CVPR 2016 spotlight (please refer to the arXiv one for most up-to-date results). In this repository, we release code, data for training Volumetric CNNs for object classification on 3D data (3D binary volume).
 
-### Contents
-1. [Train Volumetric CNNs with Torch](#train-volumetric-cnns-with-torch)
-2. [Caffe Models and Reference Results](#caffe-models-and-reference-results)
 
-### Train Volumetric CNNs with Torch
+### Installation
 
-** Prerequisites **
+Install <a href="http://torch.ch/docs/getting-started.html" target="_blank">Torch7</a>.
 
-<a href="http://torch.ch/docs/getting-started.html" target="_blank">Install Torch</a>. Note that cuDNN and GPU are required for VolumetricBatchNormalization layer. You also need to install a few torch packages including `cudnn.troch`, `cunn`, `hdf5` and `xlua`.
+Note that cuDNN and GPU are required for VolumetricBatchNormalization layer. 
+You also need to install a few torch packages (if you haven't done so) including `cudnn.troch`, `cunn`, `hdf5` and `xlua`.
 
+
+### Usage
 To train a model to classify 3D object:
 
     th train.lua
@@ -27,6 +27,7 @@ After the above training, which trains a 3D CNN classifying object based on sing
 
     th train_mo.lua --model <network_name> --model_param_file <model_param_filepath>
 
+You need to specify at which layer to max-pool the feature in the network, it can be either set in command line by `--pool_layer_idx <layer_idx>` or set it interactively when after the program starts and prints the network layers and indices. For `3dnin_fc`, `--pool_layer_idx 27` which will max pool the outputs of the last convolutional layer from multiple orientations of a volume.
 
 Below are the classification accuracis we got on ModelNet40 test data:
 
