@@ -1,6 +1,7 @@
 # 3dcnn.torch
 Volumetric CNN (Convolutional Neural Networks) for Object Classification on 3D Data, with Torch implementation.
 
+![prediction example](https://github.com/charlesq34/3dcnn.torch/blob/master/doc/teaser.png)
 
 ### Introduction
 This work is based on our [arXiv tech report](https://arxiv.org/abs/1604.03265). Our paper will also appear as a CVPR 2016 spotlight (please refer to the arXiv one for most up-to-date results). In this repository, we release code, data for training Volumetric CNNs for object classification on 3D data (binary volume).
