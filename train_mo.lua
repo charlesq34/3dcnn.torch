@@ -17,8 +17,8 @@ opt_string = [[
     --epoch_step            (default 20)                            epoch step
     -g,--gpu_index          (default 1)                             GPU index
     --max_epoch             (default 50)                            maximum number of epochs
-    --model                 (default 3dnin_fc)      model name (voxnet, 3dnin, 3dnin_fc, subvolume_sup, aniprobing)
-    --model_param_file      (default "logs/model.net)               model parameter filename
+    --model                 (default 3dnin_fc)                      model name (voxnet, 3dnin, 3dnin_fc, subvolume_sup, aniprobing)
+    --model_param_file      (default "logs/model.net")              model parameter filename
     --pool_layer_idx        (default -1)                            pool output of the idx-th layer
     --train_data            (default "data/modelnet40_20x_stack/train_data.txt")   txt file containing train h5 filenames
     --test_data             (default "data/modelnet40_20x_stack/test_data.txt")    txt file containing test h5 filenames
@@ -40,10 +40,19 @@ end
 cutorch.setDevice(opt.gpu_index)
 
 
-print('Loading model...')
+print('Loading pretrained model...')
 model = torch.load(opt.model_param_file):cuda()
 print(model)
 
+-- set criterion
+unused, criterion = dofile('torch_models/'..opt.model..'.lua')
+assert(#model == #unused) -- check for consistency
+if not criterion then
+    criterion = nn.CrossEntropyCriterion():cuda()
+end
+
+
+-- construct pooling model from original one
 if opt.pool_layer_idx < 1 then
     print('Select max pooling from which layer\'s output, type in layer index:')
     layer_idx = tonumber(io.read())
@@ -52,21 +61,14 @@ else
     layer_idx = opt.pool_layer_idx
 end
 
--- construct pooling model from original one
-model_new = model:clone()
+model_copy = model:clone()
 for i = 1,layer_idx do
-    model_new:remove(1)
+    model_copy:remove(1)
 end
-model = model_new:cuda()
+model = model_copy:cuda()
 model:zeroGradParameters()
 parameters, gradParameters = model:getParameters()
 print(model)
-
-unused, criterion = dofile('torch_models/'..opt.model..'.lua')
-assert(#model == #unused) -- check for consistency
-if not criterion then
-    criterion = nn.CrossEntropyCriterion():cuda()
-end
 
 
 print('Loading data...')
