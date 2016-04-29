@@ -14,7 +14,7 @@ opt_string = [[
     --weigthDecay           (default 0.0005)        weight decay
     -m,--momentum           (default 0.9)           mementum
     --epoch_step            (default 20)            epoch step
-    -g,--gpu_index          (default 1)             GPU index
+    -g,--gpu_index          (default 0)             GPU index (start from 0)
     --max_epoch             (default 200)           maximum number of epochs
     --jitter_step           (default 2)             jitter augmentation step size
     --model                 (default 3dnin_fc)      model name (voxnet, 3dnin, 3dnin_fc, subvolume_sup, aniprobing)
@@ -35,7 +35,7 @@ else
 end
 
 -- set gpu
-cutorch.setDevice(opt.gpu_index)
+cutorch.setDevice(opt.gpu_index+1)
 
 -- load model
 local model, criterion = dofile('torch_models/'..opt.model..'.lua')
