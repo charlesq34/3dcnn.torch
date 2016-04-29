@@ -2,19 +2,13 @@ require 'torch'
 require 'hdf5'
 
 -- download dataset 60x azimuth+elevation augmented
-if not paths.dirp('modelnet40_60x') then
-    local www = '...' -- TODO
+if not paths.dirp('data/modelnet40_60x') then
+    local www = 'https://shapenet.cs.stanford.edu/media/modelnet40_h5.tar'
     local tar = paths.basename(www)
+    os.execute('cd data')
     os.execute('wget ' .. www .. '; ' .. 'tar xvf ' .. tar)
+    os.execute('cd ..')
 end
-
--- download dataset 12x azimuth augmented
-if not paths.dirp('modelnet40_12x') then
-    local www = '...' -- TODO
-    local tar = paths.basename(www)
-    os.execute('wget ' .. www .. '; ' .. 'tar xvf ' .. tar)
-end
-
 
 -- small jitter data augmentation
 -- input: 5D tensor of NxCxDxHxW

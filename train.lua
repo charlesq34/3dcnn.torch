@@ -5,8 +5,6 @@ require 'xlua'
 require 'nn'
 dofile './provider.lua'
 
-stack_test_file = '/ShapeNetDL/projects/volumetric_cnn/og_24_3_modelnet40_20x_azimuth_elevation_stack_h5/test_og_24_3_modelnet40_20x_azimuth_elevation_stack0.h5'
-
 opt = lapp[[
     -s,--save               (default "logs")        subdirectory to save logs
     -b,--batchSize          (default 64)            batch size
@@ -18,9 +16,9 @@ opt = lapp[[
     -g,--gpu_index          (default 1)             GPU index
     --max_epoch             (default 200)           maximum number of epochs
     --jitter_step           (default 2)             jitter augmentation step size
-    --model                 (default 3dnin)         model name
-    --spatial_transform     (default false)         whether to use spatial transform
-    --multi_orientation     (default false)         whether to use multi-orientation pooling
+    --model                 (default 3dnin_fc)      model name
+    --train_data            (default "data/modelnet40_60x/train_data.txt")     txt file containing train h5 filenames
+    --test_data             (default "data/modelnet40_60x/test_data.txt")      txt file containing test h5 filenames
 ]]
 
 print(opt)
@@ -30,10 +28,7 @@ cutorch.setDevice(opt.gpu_index)
 
 -- load model
 local model, criterion = dofile('torch_models/'..opt.model..'.lua')
-if opt.spatial_transform then
-    local spanet = dofile('torch_models/spanet.lua')
-    model:insert(spanet, 1)
-end
+model = model:cuda()
 model:zeroGradParameters()
 parameters, gradParameters = model:getParameters()
 print(model)
@@ -44,9 +39,9 @@ if not criterion then
 end
 
 -- load training and testing files
-train_files = getDataFiles('train_data.txt') -- TODO: add data download code..
+train_files = getDataFiles(opt.train_data)
+test_files = getDataFiles(opt.test_data)
 print(train_files)
-test_files = getDataFiles('test_data.txt')
 print(test_files)
 
 -- config for SGD solver
@@ -102,7 +97,11 @@ function train()
                 local df_do = criterion:backward(outputs, targets)
                 model:backward(inputs, df_do) -- gradParameters in model have been updated
                 
-                confusion:batchAdd(outputs[#outputs], targets)        
+            if torch.type(outputs) == 'table' then -- multiple outputs, take the last one
+                    confusion:batchAdd(outputs[#outputs], targets)
+                else
+                    confusion:batchAdd(outputs, targets)    
+                end
                 return f, gradParameters
             end
             
@@ -127,31 +126,23 @@ function test()
     -- disable flips, dropouts and batch normalization
     model:evaluate()
     
-    if opt.multi_orientation then 
-        -- simple orientation pooling
-        current_data, current_label = loadDataFile(stack_test_file)
-        for t = 1,current_data:size(1) do
-            local inputs = current_data[t]:reshape(20,1,30,30,30)
-            local target = current_label[t]
+    for fn = 1, #test_files do
+        current_data, current_label = loadDataFile(test_files[fn])
+        
+        -- notice: volumetric batchnorm requires that both 
+        -- train and test are of the same ndim. thus we need to
+        -- use batch mode here for test
+        local filesize = (#current_data)[1]
+        local indices = torch.randperm(filesize):long():split(opt.batchSize)
+        for t, v in ipairs(indices) do
+            local inputs = current_data:index(1,v):cuda()
+            local targets = current_label:index(1,v)
             local outputs = model:forward(inputs)
-            -- TODO add code to test multi-orientation accuracy
-            output_mean = nn.Mean(1,2):forward(outputs)
-            confusion:add(output, target)
-        end
-    else
-        for fn = 1, #test_files do
-            current_data, current_label = loadDataFile(test_files[fn])
-            
-            -- notice: volumetric batchnorm requires that both 
-            -- train and test are of the same ndim. thus we need to
-            -- use batch mode here for test
-            local filesize = (#current_data)[1]
-            local indices = torch.randperm(filesize):long():split(opt.batchSize)
-            for t, v in ipairs(indices) do
-                local inputs = current_data:index(1,v):cuda()
-                local targets = current_label:index(1,v)
-                local outputs = model:forward(inputs)
+
+            if torch.type(outputs) == 'table' then -- multiple outputs, take the last one
                 confusion:batchAdd(outputs[#outputs], targets)
+            else
+                confusion:batchAdd(outputs, targets)    
             end
         end
     end
@@ -160,20 +151,20 @@ function test()
     
     -- logging test result to txt and html files
     if testLogger then
-        paths.mkdir(optsave)
+        paths.mkdir(opt.save)
         testLogger:add{train_acc, confusion.totalValid * 100}
         testLogger:style{'-','-'}
         testLogger:plot()
 
         local base64im
         do
-          os.execute(('convert -density 200 %s/test.log.eps %s/test.png'):format(optsave,optsave))
-          os.execute(('openssl base64 -in %s/test.png -out %s/test.base64'):format(optsave,optsave))
-          local f = io.open(optsave..'/test.base64')
+          os.execute(('convert -density 200 %s/test.log.eps %s/test.png'):format(opt.save,opt.save))
+          os.execute(('openssl base64 -in %s/test.png -out %s/test.base64'):format(opt.save,opt.save))
+          local f = io.open(opt.save..'/test.base64')
           if f then base64im = f:read'*all' end
         end
 
-        local file = io.open(optsave..'/report.html','w')
+        local file = io.open(opt.save..'/report.html','w')
         file:write(([[
         <!DOCTYPE html>
         <html>
@@ -182,7 +173,7 @@ function test()
         <img src="data:image/png;base64,%s">
         <h4>optimState:</h4>
         <table>
-        ]]):format(optsave,epoch,base64im))
+        ]]):format(opt.save,epoch,base64im))
         for k,v in pairs(optimState) do
           if torch.type(v) == 'number' then
             file:write('<tr><td>'..k..'</td><td>'..v..'</td></tr>\n')
@@ -197,7 +188,7 @@ function test()
 
     -- save model every 10 epochs
     if epoch % 10 == 0 then
-      local filename = paths.concat(optsave, 'model.net')
+      local filename = paths.concat(opt.save, 'model.net')
       print('==> saving model to '..filename)
       -- torch.save(filename, model:get(3):clearState())
       torch.save(filename, model)
