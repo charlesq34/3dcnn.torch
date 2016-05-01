@@ -65,11 +65,10 @@ model_copy = model:clone()
 for i = 1,layer_idx do
     model_copy:remove(1)
 end
-model = model_copy:cuda()
-model:zeroGradParameters()
-parameters, gradParameters = model:getParameters()
-print(model)
-
+model_pool = model_copy:cuda()
+model_pool:zeroGradParameters()
+parameters, gradParameters = model_pool:getParameters()
+print(model_pool)
 
 print('Loading data...')
 train_files = getDataFiles(opt.train_data)
@@ -141,6 +140,7 @@ confusion:zero()
 -- Training routine
 --
 
+model = model_pool
 epoch_step = opt.epoch_step
 batchSize = opt.batchSize
 function train()
