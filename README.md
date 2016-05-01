@@ -32,6 +32,8 @@ After the above training, which trains a 3D CNN classifying object based on sing
 
 You need to specify at which layer to max-pool the feature in the network, it can be either set in command line by `--pool_layer_idx <layer_idx>` or set interactively after the script starts - the network layers and indices will be printed. For `3dnin_fc`, one option is to set `--pool_layer_idx 27` which will max pool the outputs of the last convolutional layer from multiple orientations pooling.
 
+### Results 
+
 Below are the classification accuracis we got on ModelNet40 test data.
 
 |   Model       | Single-Orientation    | Multi-Orientation  |
