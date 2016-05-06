@@ -19,11 +19,11 @@ function jitter_chunk(src,jitter)
         local i = math.random(-jitter, jitter)
         local j = math.random(-jitter, jitter)
         local k = math.random(-jitter, jitter)
-        if i > 0 then xidx = {i+1,dst:size(3),1,dst:size(3)-i} end
+        if i >= 0 then xidx = {i+1,dst:size(3),1,dst:size(3)-i} end
         if i < 0 then xidx = {1,dst:size(3)+i,-i+1,dst:size(3)} end
-        if j > 0 then yidx = {j+1,dst:size(4),1,dst:size(4)-j} end
+        if j >= 0 then yidx = {j+1,dst:size(4),1,dst:size(4)-j} end
         if j < 0 then yidx = {1,dst:size(4)+j,-j+1,dst:size(4)} end
-        if k > 0 then zidx = {k+1,dst:size(5),1,dst:size(5)-k} end
+        if k >= 0 then zidx = {k+1,dst:size(5),1,dst:size(5)-k} end
         if k < 0 then zidx = {1,dst:size(5)+k,-k+1,dst:size(5)} end
         dst[{{idx},{},{xidx[1],xidx[2]},{yidx[1],yidx[2]},{zidx[1],zidx[2]}}] = 
                 src[{{idx},{},{xidx[3],xidx[4]},{yidx[3],yidx[4]},{zidx[3],zidx[4]}}]
