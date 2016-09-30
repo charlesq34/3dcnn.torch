@@ -6,7 +6,16 @@ Volumetric CNN (Convolutional Neural Networks) for Object Classification on 3D D
 ### Introduction
 This work is based on our [arXiv tech report](https://arxiv.org/abs/1604.03265). Our paper will also appear as a CVPR 2016 spotlight (please refer to the arXiv one for most up-to-date results). In this repository, we release code, data for training Volumetric CNNs for object classification on 3D data (binary volume).
 
+### Citation
+If you find our work useful in your research, please consider citing:
 
+    @article{qi2016volumetric,
+        title={Volumetric and Multi-View CNNs for Object Classification on 3D Data},
+        author={Qi, Charles R and Su, Hao and Niessner, Matthias and Dai, Angela and Yan, Mengyuan and Guibas, Leonidas J},
+        journal={arXiv preprint arXiv:1604.03265},
+        year={2016}
+    }
+    
 ### Installation
 
 Install <a href="http://torch.ch/docs/getting-started.html" target="_blank">Torch7</a>.
@@ -47,6 +56,7 @@ Below are the classification accuracis we got on ModelNet40 test data.
 
 <b>Note 2:</b> Numbers reported in the table above are average instance accuracy on the whole ModelNet40 test set containing 2468 CAD models from 40 categories.This different from what is on the modelnet website, which is average class accuracy on either a subset of the test set or the full test set. For direct comparison under average class accuracy metric, please refer to our [paper](https://arxiv.org/abs/1604.03265).
 
+You can directly get the trained model for the `3dnin fc` architecture through this <a href='https://shapenet.cs.stanford.edu/media/3dnin_fc.zip' target='_blank'>dowload link</a>.
 
 ### Caffe Models and Reference Results
 
@@ -55,19 +65,9 @@ Caffe prototxt files of models reported in the paper have been included in the `
 ### License
 Our code and models are released under MIT License (see LICENSE file for details).
 
-### Citation
-If you find our work useful in your research, please consider citing:
-
-    @article{qi2016volumetric,
-        title={Volumetric and Multi-View CNNs for Object Classification on 3D Data},
-        author={Qi, Charles R and Su, Hao and Niessner, Matthias and Dai, Angela and Yan, Mengyuan and Guibas, Leonidas J},
-        journal={arXiv preprint arXiv:1604.03265},
-        year={2016}
-    }
-
 ### Acknowledgement
 Torch implementation in this repository is based on the code from <a href="https://github.com/szagoruyko/cifar.torch" target="_blank">cifar.torch</a>, which is a clean and nice GitHub repo on CIFAR image classification using Torch.
 
 ### TODO
 
-Add matlab interface to extract 3d feature.
+Add matlab interface to extract 3d feature (an in-progress effort is <a href='https://github.com/charlesq34/3dmodel_feature' target='_blank'>here</a>).
