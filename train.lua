@@ -66,7 +66,7 @@ optimState = {
 -- config logging
 testLogger = optim.Logger(paths.concat(opt.save, 'test.log'))
 testLogger:setNames{'% mean class accuracy (train set)', '% mean class accuracy (test set)'}
-testLogger.showPlot = 'false'
+testLogger.showPlot = false
 
 -- confusion matrix
 confusion = optim.ConfusionMatrix(40)
